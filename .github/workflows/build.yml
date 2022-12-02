@@ -29,8 +29,21 @@ jobs:
         # TODO: remove this from-source build and pull in (1) headers and (2) a lib from HEAD
         # or just bite the pullet and get a dpkg port going already
         run: |
+          rm -rf oneDNN/
+          git clone -b release https://github.com/bwasti/oneDNN.git
+          cd oneDNN
+          cmake . \
+            -G Ninja \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DDNNL_LIBRARY_TYPE=STATIC \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX=$HOME/usr \
+            -DDNNL_BLAS_VENDOR=ACCELERATE \
+            -DDNNL_BUILD_TESTS=OFF \
+            -DDNNL_BUILD_EXAMPLES=OFF
+          ninja
           rm -rf flashlight/
-          git clone https://github.com/flashlight/flashlight
+          git clone -b accelerate https://github.com/bwasti/flashlight
           cd flashlight
           cmake . \
             -G Ninja \
@@ -39,10 +52,12 @@ jobs:
             -DCMAKE_INSTALL_PREFIX=$HOME/usr \
             -DFL_USE_ARRAYFIRE=ON \
             -DFL_ARRAYFIRE_USE_CPU=ON \
-            -DFL_USE_ONEDNN=OFF \
+            -DDNNL_DIR=$HOME/usr/lib/cmake/dnnl/ \
+            -DFL_USE_ONEDNN=ON \
             -DFL_BUILD_DISTRIBUTED=OFF \
             -DFL_BUILD_TESTS=OFF \
-            -DFL_BUILD_EXAMPLES=OFF
+            -DFL_BUILD_EXAMPLES=OFF \
+            -DFL_BUILD_SCRIPTS=OFF
           ninja
           ninja install
       - name: "Checkout Shumai source"
